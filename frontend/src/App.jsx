@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 
 function App() {
@@ -10,8 +10,14 @@ function App() {
 
   const [loading, setLoading] = useState(false);
 
-  // ✅ API URL from ENV
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  // ✅ Warmup backend (VERY IMPORTANT)
+  useEffect(() => {
+    axios.get(API_URL)
+      .then(() => console.log("Server Warmed 🔥"))
+      .catch(() => console.log("Warmup failed"));
+  }, []);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -22,11 +28,12 @@ function App() {
     setLoading(true);
 
     try {
-      await axios.post(`${API_URL}/submit`, form);
+      await axios.post(`${API_URL}/submit`, form, {
+        timeout: 10000
+      });
 
       alert("✅ Data Saved Successfully!");
 
-      // ✅ Reset form
       setForm({
         name: "",
         email: "",
@@ -34,8 +41,7 @@ function App() {
       });
 
     } catch (error) {
-      console.error(error);
-      alert("❌ Error saving data");
+      alert("❌ Error or Server Slow (try again)");
     } finally {
       setLoading(false);
     }
@@ -73,9 +79,12 @@ function App() {
         ></textarea><br /><br />
 
         <button type="submit" disabled={loading}>
-          {loading ? "Submitting..." : "Submit"}
+          {loading ? "⏳ Submitting..." : "Submit"}
         </button>
       </form>
+
+      {/* ✅ UX Message */}
+      {loading && <p>🚀 Connecting to server...</p>}
     </div>
   );
 }
